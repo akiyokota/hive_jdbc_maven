@@ -1,0 +1,100 @@
+package hive_jdbc.hive_jdbc;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+/**
+ * Hello world!
+ *
+ */
+public class App 
+{
+	
+	private static Connection con;
+	private static Statement stmt;
+	private static ResultSet res;
+	
+	private static String homeLocal = "jdbc:hive2://192.168.1.70:10000/default";
+	private static String cloudera = "jdbc:hive2://10.28.147.182:10000/default";
+	private static String sears = "jdbc:hive2://dwhadoop306p.qa.ch3.s.com:10000/incoming_fphd";
+	
+	private static String localLogin = "cloudera";
+	private static String localpw = "cloudera";
+	
+	private static String searsLogin = "ayokota";
+	private static String searspass = "282206709b";
+	
+	private static String driverName = "org.apache.hive.jdbc.HiveDriver";
+	
+	public static void establishHiveConnection(String url, String user, String pw) {
+		try {
+			Class.forName(driverName);
+			System.out.println("Trying to connect to hive database...");
+			con = DriverManager.getConnection(url, user, pw);
+			System.out.println("Connection succesfully established!");
+			stmt = con.createStatement();
+
+		} catch (Exception e) {
+			 e.printStackTrace();
+		}
+	}
+	
+	public static void showTables() throws Exception {
+		res = stmt.executeQuery("show tables");
+		while (res.next()) {
+		  System.out.println(res.getString(1));
+		}
+	}
+	
+	public static void describeTable(String table) throws Exception {
+		res = stmt.executeQuery("describe " + table);
+		while (res.next()) {
+		  System.out.println(res.getString(1) + "\t" + res.getString(2));
+		}
+	}
+	
+	public static void createTable(String table, Map<String, String> attributes) throws Exception {
+		stmt.executeUpdate("drop table if exists " + table);
+		
+		String sql = "create table " + table + " (";
+		Iterator it = attributes.entrySet().iterator();
+	    while (it.hasNext()) {
+	        Map.Entry pair = (Map.Entry)it.next();
+	        sql = sql + pair.getKey() + " " + pair.getValue() + ",";
+	        it.remove(); 
+	    }
+	    sql = sql.substring(0,sql.length()-1);
+	    sql += ")";
+	    stmt.executeUpdate(sql);
+		
+	}
+	
+	public static void main(String[] args) {
+		 
+		 try {
+			 //----- establish connection
+			 establishHiveConnection(sears, searsLogin, searspass);			 
+
+			 //showTables();
+			// describeTable("sample_07");
+			 
+			 //----- create table
+			 // use linked Hash map so they are in order
+			
+			 showTables();
+			
+
+			 
+		 } catch (SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}

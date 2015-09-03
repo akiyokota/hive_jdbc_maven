@@ -1,0 +1,127 @@
+package hive_jdbc.hive_jdbc;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+/**
+ * Hello world!
+ *
+ */
+public class App 
+{
+	
+	private static Connection con;
+	private static Statement stmt;
+	private static ResultSet res;
+	
+	private static String homeLocal = "jdbc:hive2://192.168.1.70:10000/default";
+	private static String cloudera = "jdbc:hive2://10.28.144.182:10000/default";
+
+	private static String localLogin = "cloudera";
+	private static String localpw = "cloudera";
+	
+	private static String driverName = "org.apache.hive.jdbc.HiveDriver";
+	
+	public static void establishHiveConnection(String url, String user, String pw) {
+		try {
+			Class.forName(driverName);
+			System.out.println("Trying to connect to hive database...");
+			con = DriverManager.getConnection(url, user, pw);
+			System.out.println("Connection succesfully established!");
+			stmt = con.createStatement();
+
+		} catch (Exception e) {
+			 e.printStackTrace();
+		}
+	}
+	
+	public static void showTables() throws Exception {
+		res = stmt.executeQuery("show tables");
+		while (res.next()) {
+		  System.out.println(res.getString(1));
+		}
+	}
+	
+	public static void describeTable(String table) throws Exception {
+		res = stmt.executeQuery("describe " + table);
+		while (res.next()) {
+		  System.out.println(res.getString(1) + "\t" + res.getString(2));
+		}
+	}
+	
+	public static void createTable(String table, Map<String, String> attributes) throws Exception {
+		stmt.executeUpdate("drop table if exists " + table);
+		
+		String sql = "create table " + table + " (";
+		Iterator it = attributes.entrySet().iterator();
+	    while (it.hasNext()) {
+	        Map.Entry pair = (Map.Entry)it.next();
+	        sql = sql + pair.getKey() + " " + pair.getValue() + ",";
+	        it.remove(); 
+	    }
+	    sql = sql.substring(0,sql.length()-1);
+	    sql += ")";
+	    stmt.executeUpdate(sql);
+		
+	}
+	
+	public static void main(String[] args) {
+		 
+		 try {
+			 //----- establish connection
+			 establishHiveConnection(cloudera, localLogin, localpw);			 
+
+			 //showTables();
+			// describeTable("sample_07");
+			 
+			 //----- create table
+			 // use linked Hash map so they are in order
+			 Map attributes = new LinkedHashMap<String, String> ();
+			 attributes.put("EmployeeId", "int");
+			 attributes.put("EmployeeName", "string");
+			 attributes.put("EmployeeDOB", "date");
+			 attributes.put("Salary", "int");
+			 
+			 
+
+			 
+			 //createTable("Employees", attributes);
+			 System.out.println("\nEmployee table:");
+			 //describeTable("Employees");
+			 
+			 //------ load data from file
+			 String filepath = "data.txt";
+			 
+			 //String sql = "insert into table Employees (EmployeeId, EmployeeName, EmployeeDOB, Salary) values (001, 'John', 1992-01-23, 5000 ) ";
+			 //String sql = "INSERT INTO TABLE Employees VALUES ('002', 'paul', '1995-09-22', '15000' ) ";
+			 //System.out.println("Running: " + sql);
+			 //stmt.executeUpdate(sql);
+			 String sql2 = "insert into table sampel_04 Values (1,2,3)";
+			 
+			 stmt.executeUpdate(sql2);
+			
+			 
+//			 String sql = "select * from " + "Employees";
+//			 System.out.println("Running: " + sql);
+//			 res = stmt.executeQuery(sql);
+//			 while (res.next()) {
+//				 System.out.println(res.getString(1));
+//				 System.out.println(res.getString(2));
+//				 System.out.println(res.getString(3));
+//				 System.out.println(res.getString(4));
+//			 }
+//			 
+			 
+		 } catch (SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}
